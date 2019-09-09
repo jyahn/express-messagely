@@ -43,10 +43,12 @@ class User {
     const user = result.rows[0];
 
     if (user) {
-      if (await bcrypt.compare(password, user.password) === true) {
-        return { message: "Authenticated!" };
-      }
+      return await bcrypt.compare(password, user.password);
     }
+    else {
+      return false;
+    }
+    // throw new ExpressError("invalid user/password", 400);
 
   }
 
@@ -54,12 +56,14 @@ class User {
 
   static async updateLoginTimestamp(username) {
 
-    await db.query(
+    const result = await db.query(
       `UPDATE users
         SET last_login_at = current_timestamp
         WHERE username = $1
         RETURNING username, last_login_at`, [username]
     )
+
+    return result.rows[0];
   }
 
   /** All: basic info on all users:
@@ -175,26 +179,26 @@ class User {
           WHERE m.to_username = $1`,
       [username]);
 
-      let messages = result.rows;
-      let arr = [];
-  
-      for (let m of messages) {
-        let obj = {
-          id: m.id,
-          body: m.body,
-          sent_at: m.sent_at,
-          read_at: m.read_at,
-          from_user: {
-            username: m.from_username,
-            first_name: m.from_first_name,
-            last_name: m.from_last_name,
-            phone: m.from_phone
-          }
+    let messages = result.rows;
+    let arr = [];
+
+    for (let m of messages) {
+      let obj = {
+        id: m.id,
+        body: m.body,
+        sent_at: m.sent_at,
+        read_at: m.read_at,
+        from_user: {
+          username: m.from_username,
+          first_name: m.from_first_name,
+          last_name: m.from_last_name,
+          phone: m.from_phone
         }
-        arr.push(obj);
       }
-  
-      return arr;
+      arr.push(obj);
+    }
+
+    return arr;
   }
 }
 
