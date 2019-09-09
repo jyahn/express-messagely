@@ -26,7 +26,7 @@ class User {
             RETURNING id, username, first_name, last_name,`,
       [username, hashedPassword, first_name, last_name, phone]);
 
-    return result.row[0];
+    return result.rows[0];
 
   }
 
@@ -49,12 +49,26 @@ class User {
 
   /** Update last_login_at for user */
 
-  static async updateLoginTimestamp(username) { }
+  static async updateLoginTimestamp(username) {
+
+    await db.query(
+      `UPDATE users
+        SET last_login_at = current_timestamp
+        WHERE username = $1`, [username]
+    )
+  }
 
   /** All: basic info on all users:
    * [{username, first_name, last_name, phone}, ...] */
 
-  static async all() { }
+  static async all() {
+
+    const result = await db.query(
+      `SELECT username, first_name, last_name, phone
+        FROM users`
+    )
+    return result.rows;
+   }
 
   /** Get: get user by username
    *
@@ -65,7 +79,14 @@ class User {
    *          join_at,
    *          last_login_at } */
 
-  static async get(username) { }
+  static async get(username) {
+
+    const result = await db.query(
+      `SELECT username, first_name, last_name, phone, join_at, last_login_at
+        FROM users
+        WHERE username = $1`, [username]
+    )
+   }
 
   /** Return messages from this user.
    *
