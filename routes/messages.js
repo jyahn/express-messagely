@@ -19,7 +19,14 @@ const ExpressError = require("../expressError");
 router.get("/:id", ensureLoggedIn, async function (req, res, next) {
   try {
     const message = await Message.get(req.params.id);
-    return res.json(message);
+    //The following if statement ensures that the currently logged in user is
+    //either the sender or the recipient of the message they are attempting to view.
+    if (message.from_user.username === req.user.username || message.to_user.username === req.user.username) {
+      return res.json(message);
+    }
+    else {
+      throw new ExpressError("You have no business seeing this message.", 401);
+    }
   } catch (err) {
     next(err);
   }
@@ -36,15 +43,12 @@ router.get("/:id", ensureLoggedIn, async function (req, res, next) {
 
 router.post("/", ensureLoggedIn, async function (req, res, next) {
   try {
-    console.log("current usert --->", req.user.username);
     let message = await Message.create({
       from_username: req.user.username,
       to_username: req.body.to_username,
       body: req.body.body
     });
     return res.json(message);
-    // console.log("Current User --->", req.user);
-    // return res.json({ "here": "now" });
   } catch (err) {
     next(err);
   }
@@ -61,8 +65,15 @@ router.post("/", ensureLoggedIn, async function (req, res, next) {
 
 router.post("/:id/read", ensureLoggedIn, async function (req, res, next) {
   try {
-    const message = await Message.markRead(req.params.id);
-    return res.json(message);
+    let retrievedMsg = await Message.get(req.params.id);
+    //The following if statement ensures that the currently logged in user is
+    //the recipient of the message they are attempting to view/read.
+    if (retrievedMsg.to_user.username === req.user.username) {
+      const message = await Message.markRead(req.params.id);
+      return res.json(message);
+    } else {
+      throw new ExpressError("You cannot read a message that was not sent to you.", 401);
+    }
   } catch (err) {
     next(err);
   }

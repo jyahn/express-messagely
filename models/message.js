@@ -33,7 +33,7 @@ class Message {
       `UPDATE messages
            SET read_at = current_timestamp
            WHERE id = $1
-           RETURNING id, read_at`,
+           RETURNING id, to_username, read_at`,
       [id]);
 
     if (!result.rows[0]) {
