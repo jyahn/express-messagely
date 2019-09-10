@@ -1,7 +1,7 @@
-const express = require("express");
-const router = new express.Router();
+const Router = require("express").Router;
+const router = new Router();
 const Message = require("../models/message");
-const {ensureLoggedIn} = require("../middleware/auth");
+const { ensureLoggedIn } = require("../middleware/auth");
 const ExpressError = require("../expressError");
 /** GET /:id - get detail of message.
  *
@@ -16,11 +16,11 @@ const ExpressError = require("../expressError");
  *
  **/
 
-router.get("/:id", async function(req, res, next) {
+router.get("/:id", ensureLoggedIn, async function (req, res, next) {
   try {
     const message = await Message.get(req.params.id);
     return res.json(message);
-  } catch(err) {
+  } catch (err) {
     next(err);
   }
 });
@@ -34,17 +34,18 @@ router.get("/:id", async function(req, res, next) {
  *
  **/
 
-router.post("/", ensureLoggedIn, async function(req, res, next) {
+router.post("/", ensureLoggedIn, async function (req, res, next) {
   try {
     console.log("current usert --->", req.user.username);
     let message = await Message.create({
       from_username: req.user.username,
       to_username: req.body.to_username,
-      body: req.body.body });
+      body: req.body.body
+    });
     return res.json(message);
     // console.log("Current User --->", req.user);
     // return res.json({ "here": "now" });
-  } catch(err) {
+  } catch (err) {
     next(err);
   }
 });
@@ -58,13 +59,13 @@ router.post("/", ensureLoggedIn, async function(req, res, next) {
  *
  **/
 
- router.post("/:id/read", async function(req, res, next) {
-   try {
+router.post("/:id/read", ensureLoggedIn, async function (req, res, next) {
+  try {
     const message = await Message.markRead(req.params.id);
     return res.json(message);
-   } catch(err) {
-     next(err);
-   }
- })
+  } catch (err) {
+    next(err);
+  }
+})
 
 module.exports = router;

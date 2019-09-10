@@ -1,5 +1,5 @@
-const express = require("express");
-const router = new express.Router();
+const Router = require("express").Router;
+const router = new Router();
 const ExpressError = require("../expressError");
 const jwt = require("jsonwebtoken");
 
