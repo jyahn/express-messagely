@@ -5,8 +5,10 @@ const { SECRET_KEY } = require("../config");
 const app = require("../app");
 const db = require("../db");
 const User = require("../models/user");
+const Message = require("../models/message");
 
-describe("Auth Routes Test", function () {
+
+describe("User Routes Test", function () {
   let testToken1;
   let testToken2;
 
@@ -29,6 +31,12 @@ describe("Auth Routes Test", function () {
       last_name: "TestLastName2",
       phone: "+19999999999"
     })
+
+    let m1 = await Message.create({
+      from_username: "test1",
+      to_username: "test2",
+      body: "u1-to-u2"
+    });
 
     let payload1 = { username: u1.username };
     testToken1 = jwt.sign(payload1, SECRET_KEY);
@@ -76,4 +84,63 @@ describe("Auth Routes Test", function () {
       );
     });
   });
+  //happy to case
+  describe("GET /users/test2/to", function () {
+    test("the user that is logged in can view the messages that were sent to him/her", async function () {
+      let response = await request(app)
+        .get("/users/test2/to")
+        .send({ _token: testToken2 });
+      expect(response.status).toEqual(200);
+      expect(response.body).toEqual(
+        {
+          "messages": [
+            {
+              "id": expect.any(Number),
+              "body": "u1-to-u2",
+              "sent_at": expect.any(String),
+              "read_at": null,
+              "from_user": {
+                "username": "test1",
+                "first_name": "TestFirstName",
+                "last_name": "TestLastName",
+                "phone": "+14155550000"
+              }
+            }
+          ]
+        }
+      );
+    });
+  });
+  //happy from case
+  describe("GET /users/test1/from", function () {
+    test("the user that is logged in can view the messages that he/she sent", async function () {
+      let response = await request(app)
+        .get("/users/test1/from")
+        .send({ _token: testToken1 });
+      expect(response.status).toEqual(200);
+      expect(response.body).toEqual(
+        {
+          "messages": [
+            {
+              "id": expect.any(Number),
+              "body": "u1-to-u2",
+              "sent_at": expect.any(String),
+              "read_at": null,
+              "to_user": {
+                "username": "test2",
+                "first_name": "TestFirstName2",
+                "last_name": "TestLastName2",
+                "phone": "+19999999999"
+              }
+            }
+          ]
+        }
+      );
+    });
+  });
+
+
+
+
+
 });
